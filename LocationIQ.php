@@ -32,7 +32,7 @@ final class LocationIQ extends AbstractHttpProvider implements Provider
     /**
      * @var string
      */
-    const BASE_API_URL = 'https://locationiq.org/v1';
+    const BASE_API_URL = 'https://eu1.locationiq.com/v1';
 
     /**
      * @var string
@@ -65,24 +65,19 @@ final class LocationIQ extends AbstractHttpProvider implements Provider
 
         $content = $this->executeQuery($url, $query->getLocale());
 
-        $doc = new \DOMDocument();
-        if (!@$doc->loadXML($content) || null === $doc->getElementsByTagName('searchresults')->item(0)) {
-            throw InvalidServerResponse::create($url);
+        $json = json_decode($content);
+
+        $searchResult = $json[0];
+
+        $result = [];
+        $result['latitude'] = $searchResult['lat'];
+        $result['longitude'] = $searchResult['lon'];
+        $result['place_id'] = $searchResult['place_id'];
+        if(isset($searchResult['display_name'])){
+          $result['display_name'] = $searchResult['display_name'];
         }
 
-        $searchResult = $doc->getElementsByTagName('searchresults')->item(0);
-        $places = $searchResult->getElementsByTagName('place');
-
-        if (null === $places || 0 === $places->length) {
-            return new AddressCollection([]);
-        }
-
-        $results = [];
-        foreach ($places as $place) {
-            $results[] = $this->xmlResultToArray($place, $place);
-        }
-
-        return new AddressCollection($results);
+        return $result;
     }
 
     /**
@@ -173,12 +168,12 @@ final class LocationIQ extends AbstractHttpProvider implements Provider
 
     private function getGeocodeEndpointUrl(): string
     {
-        return self::BASE_API_URL.'/search.php?q=%s&format=xml&addressdetails=1&limit=%d&key='.$this->apiKey;
+        return self::BASE_API_URL.'/search.php?q=%s&format=json&addressdetails=1&limit=%d&key='.$this->apiKey;
     }
 
     private function getReverseEndpointUrl(): string
     {
-        return self::BASE_API_URL.'/reverse.php?format=xml&lat=%F&lon=%F&addressdetails=1&zoom=%d&key='.$this->apiKey;
+        return self::BASE_API_URL.'/reverse.php?format=json&lat=%F&lon=%F&addressdetails=1&zoom=%d&key='.$this->apiKey;
     }
 
     private function getNodeValue(\DOMNodeList $element)
