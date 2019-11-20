@@ -69,15 +69,7 @@ final class LocationIQ extends AbstractHttpProvider implements Provider
 
         $searchResult = $json[0];
 
-        $result = [];
-        $result['latitude'] = $searchResult['lat'];
-        $result['longitude'] = $searchResult['lon'];
-        $result['place_id'] = $searchResult['place_id'];
-        if(isset($searchResult['display_name'])){
-          $result['display_name'] = $searchResult['display_name'];
-        }
-
-        return $result;
+        return $searchResult;
     }
 
     /**
